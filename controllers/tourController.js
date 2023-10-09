@@ -4,8 +4,14 @@
 const fs = require('fs');
 const { error } = require('console');
 const Tour = require('../models/tourModel');
+const APIFeatures = require('../utils/apiFeatures');
 
-// JSON input, CheckID and checkBody are no longer needed after Mongo is implemented
+exports.aliasTopTours = (req, res, next) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  next();
+};
 // const tours = JSON.parse(
 //   fs.readFileSync(`${ __dirname }/../dev-data/data/tours-simple.json`),
 // );
@@ -32,23 +38,17 @@ const Tour = require('../models/tourModel');
 //   next();
 // };
 
+
+
 exports.getAllTours =  async (req, res) => {
   try {
-    //BUILD QUERY
-    //1) Filtering
-    const queryObj = {...req.query};
-    const excludeFields = [ 'limit', 'page', 'sort', 'fields'];
-    excludeFields.forEach(el => delete queryObj[el]);
-    
-    
-    //2) Advanced filtering
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
-    console.log(JSON.parse(queryStr));
-
     //EXECUTE QUERY
-    const query =  Tour.find(JSON.parse(queryStr));
-    const tours = await query;
+    const features = new APIFeatures(Tour.find(),req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+    const tours = await features.query;
 
     //SEND REQUEST
     res.status(200).json({
