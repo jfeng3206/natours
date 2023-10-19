@@ -12,16 +12,27 @@ const DB = process.env.DATABASE.replace(
 mongoose
   .connect(DB, {
     useNewUrlParser: true,
-    useUnifiedTopology: false,
   })
-  .then(con => {
-    //console.log(con.connetions);
-    console.log('DB connection successful!');
-  });
+  .then(() => console.log('DB connection successful'));
+
+process.on('uncaughtException', (err) => {
+  console.log(err.name, err.message);
+  console.log('UNCAUGHT EXCEPTION! 💢 Shutting down...');
+  process.exit(1);
+});
 
 //console.log(process.env);
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
+const server = app.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log(`App running on port ${port}...`);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.log(err.name, err.message);
+  console.log('UNHANDLED REJECTION! 💢 Shutting down...');
+  // close the server before process exit abruptly
+  server.close(() => {
+    process.exit(1);
+  });
 });

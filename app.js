@@ -1,5 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
+const AppError = require('./utils/appError');
+const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 
@@ -25,5 +27,15 @@ app.use((req, res, next) => {
 // 3) ROUTES
 app.use('/api/v2/tours', tourRouter);
 app.use('/api/v2/users', userRouter);
+
+// 4) Error Handling
+// 4)a Handling Unhandled Routes
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
+});
+
+// 4)b Handling Global Errors with Global Error Handling Middleware
+app.use(globalErrorHandler);
+
 // 4) SERVER START
 module.exports = app;
